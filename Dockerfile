@@ -29,12 +29,12 @@ RUN \
     unzip && \
   echo "**** install bazarr ****" && \
   if [ -z ${BAZARR_VERSION+x} ]; then \
-    BAZARR_VERSION=$(curl -sX GET "https://api.github.com/repos/morpheus65535/bazarr/releases/latest" \
+    BAZARR_VERSION=$(curl -sX GET "https://api.github.com/repos/raymondtc/bazarr/releases/latest" \
     | awk '/tag_name/{print $4;exit}' FS='[""]'); \
   fi && \
   curl -o \
     /tmp/bazarr.zip -L \
-    "https://github.com/morpheus65535/bazarr/releases/download/${BAZARR_VERSION}/bazarr.zip" && \
+    "https://github.com/raymondtc/bazarr/releases/download/${BAZARR_VERSION}/bazarr.zip" && \
   mkdir -p \
     /app/bazarr/bin && \
   unzip \
