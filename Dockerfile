@@ -32,6 +32,7 @@ RUN \
     BAZARR_VERSION=$(curl -sX GET "https://api.github.com/repos/raymondtc/bazarr/releases/latest" \
     | awk '/tag_name/{print $4;exit}' FS='[""]'); \
   fi && \
+  echo "bazarr version: ${BAZARR_VERSION}" && \
   curl -o \
     /tmp/bazarr.zip -L \
     "https://github.com/raymondtc/bazarr/releases/download/${BAZARR_VERSION}/bazarr.zip" && \
