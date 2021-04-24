@@ -1,0 +1,66 @@
+name: Build and Push Bazarr
+on:
+  push:
+    branches:    
+      - main
+  workflow_dispatch:
+  release:
+    types: [published]
+  #schedule:
+    #- cron: '0 20 * * *'
+
+env:
+  DOCKERHUB_REPO_BAZARR: raymond17/bazarr
+
+jobs:   
+  push_to_registries:
+    name: Push Bazarr Docker image to multiple registries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get bazarr latest version and check if tag exists
+        run: |
+          BAZARR_VERSION=$(curl -s https://api.github.com/repos/raymondtc/bazarr/releases/latest | grep -oP '"tag_name": "v\K(.*)(?=")')
+          echo "bazarr_version=${BAZARR_VERSION}" >> $GITHUB_ENV
+          TOKEN=$( curl -sSLd "username=${{ secrets.DOCKERHUB_USERNAME }}&password=${{ secrets.DOCKERHUB_TOKEN }}" https://hub.docker.com/v2/users/login | jq -r ".token" )
+          BAZARR_TAG_EXISTS=$(curl -sH "Authorization: JWT $TOKEN" "https://hub.docker.com/v2/repositories/${{ env.DOCKERHUB_REPO_BAZARR }}/tags/${BAZARR_VERSION}/" | jq . | grep tag_status | grep active | wc -l)
+          echo "bazarr_tag_exists=$BAZARR_TAG_EXISTS" >> $GITHUB_ENV
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        if: ${{ env.bazarr_tag_exists != '1' }}
+      - name: Test
+        run: env
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        if: ${{ env.bazarr_tag_exists != '1' }}
+      - name: Login to ghcr
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ env.bazarr_tag_exists != '1' }}
+      - name: Build and Push Bazarr
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          build-args: |
+            BAZARR_VERSION=${{ env.bazarr_version }}
+          tags: |
+            ${{ env.DOCKERHUB_REPO_BAZARR }}:latest
+            ${{ env.DOCKERHUB_REPO_BAZARR }}:${{ env.bazarr_version }}
+            ghcr.io/raymondtc/bazarr:latest
+            ghcr.io/raymondtc/bazarr:${{ env.bazarr_version }}
+          push: true
+        if: ${{ env.bazarr_tag_exists != '1' }}
+      #- name: Bazarr Docker Hub Description
+      #  uses: peter-evans/dockerhub-description@v2
+      #  with:
+      #    username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #    password: ${{ secrets.DOCKERHUB_TOKEN }}
+      #    repository: ${{ env.DOCKERHUB_REPO_BAZARR }}
+      #    readme-filepath: ./bazarr/README.md
+      #  if: ${{ env.bazarr_tag_exists != '1' }}  
+ 
