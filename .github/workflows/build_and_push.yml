@@ -46,8 +46,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          build-args: |
-            BAZARR_VERSION=${{ env.bazarr_version }}
+          #build-args: |
+            #BAZARR_VERSION=${{ env.bazarr_version }}
           tags: |
             ${{ env.DOCKERHUB_REPO_BAZARR }}:latest
             ${{ env.DOCKERHUB_REPO_BAZARR }}:${{ env.bazarr_version }}
